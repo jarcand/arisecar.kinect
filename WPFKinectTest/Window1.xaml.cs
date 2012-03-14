@@ -61,6 +61,8 @@ namespace WPFKinectTest
         int MinimumDistance = 800;
         int MaximumDistance = 4096;
 
+        Boolean savedFlag = false;
+
         //height from camera lense to floor
         double heightOfCamera = 760; //in mm 
 
@@ -85,7 +87,7 @@ namespace WPFKinectTest
             slider1.Value = kinectSensor.ElevationAngle;
 
             
-            //checkIfFlatFloorTest(); //For testing purposes
+            checkIfFlatFloorTest(); //For testing purposes
         }
  
         /// <summary>
@@ -263,6 +265,8 @@ namespace WPFKinectTest
 
             // close the stream
             tw.Close();
+            savedFlag = true;
+            
         }
 
 
@@ -270,7 +274,7 @@ namespace WPFKinectTest
         private void checkIfFlatFloorTest()
         {
             //Open the file that contains the depth map of what you want to test
-            TextReader txtReader = new StreamReader("TESTINGFILE.txt");
+            TextReader txtReader = new StreamReader("nonFlatFloorHeight760mmElevationminus20.txt");
             int[,] depthArray = new int[640, 480];
 
             //Set the testingAngle or  use a floor loop on a flat surface to find out the best angle
@@ -293,6 +297,10 @@ namespace WPFKinectTest
                     if (Math.Abs(depthArray[320, 240] - calculatedDistance) < 50)
                     {
                         Console.WriteLine("\nTesting: Flat");
+                    }
+                    else
+                    {
+                        Console.WriteLine("\nTesting: NOT Flat");
                     }
         }
 
@@ -342,11 +350,11 @@ namespace WPFKinectTest
                     for (int j = 240; j < 480; j++)
                     {
                         int n = j - 240;
-                        double vertAngle = 72 + (n / 480.0 * (40));
+                        double vertAngle = bestAngle + (n / 480.0 * (43));
                         double dStar = heightOfCamera / Math.Cos(vertAngle);
                         double radiusRobot = 800 / 2;
                         double horAngle = Math.Atan2(radiusRobot, dStar);
-                        int point = (int)((horAngle / (55)) * 640);
+                        int point = (int)((horAngle / (57)) * 640);
 
                         for (int i = point; i < 640 - point; i++)
                         {
@@ -357,6 +365,8 @@ namespace WPFKinectTest
                 else
                 {
                     Console.WriteLine(bestAngle + "\n Not Flat!");
+                  //  if(savedFlag)
+                      //  saveDepthMapToFile(twodDepth);
                 }
             }
 
