@@ -27,6 +27,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Kinect;
+using System.IO;
 
 namespace WPFKinectTest
 {
@@ -79,6 +80,9 @@ namespace WPFKinectTest
             kinectSensor.DepthFrameReady += new EventHandler<DepthImageFrameReadyEventArgs>(DepthImageReady);
             //Read the elevation value of the Kinect and assign it to the slider so it doesn't look weird when the program starts 
             slider1.Value = kinectSensor.ElevationAngle;
+
+            
+            //checkIfFlatFloorTest(); //For testing purposes
         }
  
         /// <summary>
@@ -216,10 +220,6 @@ namespace WPFKinectTest
             //Analyze realDepth array:
             //analyzeRealDepthArray(realDepthArray);
            checkIfFlatFloor(realDepthArray);
-            
-
-
-
 
             //Now that we are done painting the pixels, we can return the byte array to be painted
             return this.depthFrame32;
@@ -243,13 +243,63 @@ namespace WPFKinectTest
         }
 
 
+        //Here we save an image from the kinect camera so that we may run
+        //automated tests later
+        private void saveDepthMapToFile(int[,] twodDepth)
+        {
+            //Here we write the depth map to a file for testing purposes
+            TextWriter tw = new StreamWriter("TESTINGFILE.txt");
+            // write a line of text to the file
+            for (int i = 0; i < 640; i++)
+                for (int j = 0; j < 480; j++)
+                    tw.WriteLine(twodDepth[i, j]);
+
+            // close the stream
+            tw.Close();
+        }
+
+
+        //Method used for testing simulated depth maps
+        private void checkIfFlatFloorTest()
+        {
+            //Open the file that contains the depth map of what you want to test
+            TextReader txtReader = new StreamReader("flatFloorHeight760mmElevationminus20.txt");
+            int[,] depthArray = new int[640, 480];
+
+            //Convert txt file to two dimensional depth map
+            for (int x = 0; x < 640; x++)
+            {
+                for (int y = 0; y < 480; y++)
+                {
+                    depthArray[x, y] = Convert.ToInt32(txtReader.ReadLine());
+                }
+            }
+
+            //Test the depth map
+
+            //h = height from camera lense to floor
+            double height = 760; //in mm 
+                for (int angle = 50; angle <= 90; angle++)
+                {
+                    double radAngle = Math.PI / 180 * angle;
+                    double calculatedDistance = height / Math.Cos(radAngle);
+                    if (Math.Abs(depthArray[320, 240] - calculatedDistance) < 50)
+                    {
+                        Console.WriteLine("\nTesting: Flat");
+                        break;
+                    }
+                }
+        }
+
+
         private void checkIfFlatFloor(int[] realDepthArray)
         {
 
-            //h = 77.5cm height of c
-            double height = 660; //in mm 
+            //h = height from camera lense to floor
+            double height = 760; //in mm 
             int[,] twodDepth = new int[640, 480];
 
+            //Place one dimensional depth array into two dimensional depth array
             for (int x = 0; x < 640; x++)
             {
                 for (int y = 0; y < 480; y++)
@@ -259,6 +309,8 @@ namespace WPFKinectTest
             }
 
 
+            //Find the best angle that allows us to calculate distance from middle point [320,240]
+            //to camera, and then that value be closest to actual value given to us by kinect
             if (bestAngle == -361)
             {
                 for (int angle = 50; angle <= 90; angle++)
@@ -268,11 +320,15 @@ namespace WPFKinectTest
                     if (Math.Abs(twodDepth[320, 240] - calculatedDistance) < 50)
                     {
                         bestAngle = angle;
+                        Console.WriteLine("\nFlat");
+
+                        //saveDepthMapToFile(twodDepth); //Saving depth map for testing purposes
                         break;
                     }
 
                 }
             }
+
 
                 for (int j = 240; j < 480; j++)
                 {
