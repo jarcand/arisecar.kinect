@@ -60,7 +60,10 @@ namespace WPFKinectTest
         //XBox Kinects (default) are limited between 800mm and 4096mm.
         int MinimumDistance = 800;
         int MaximumDistance = 4096;
-        
+
+        //height from camera lense to floor
+        double heightOfCamera = 760; //in mm 
+
         //Declare our Kinect Sensor!
         KinectSensor kinectSensor;
         
@@ -249,7 +252,11 @@ namespace WPFKinectTest
         {
             //Here we write the depth map to a file for testing purposes
             TextWriter tw = new StreamWriter("TESTINGFILE.txt");
-            // write a line of text to the file
+            
+            //Write the height, then the best angle
+            tw.WriteLine(heightOfCamera);
+            tw.WriteLine(bestAngle);
+
             for (int i = 0; i < 640; i++)
                 for (int j = 0; j < 480; j++)
                     tw.WriteLine(twodDepth[i, j]);
@@ -263,8 +270,13 @@ namespace WPFKinectTest
         private void checkIfFlatFloorTest()
         {
             //Open the file that contains the depth map of what you want to test
-            TextReader txtReader = new StreamReader("flatFloorHeight760mmElevationminus20.txt");
+            TextReader txtReader = new StreamReader("TESTINGFILE.txt");
             int[,] depthArray = new int[640, 480];
+
+            //Set the testingAngle or  use a floor loop on a flat surface to find out the best angle
+            int testingHeight = Convert.ToInt32(txtReader.ReadLine());
+            int testingAngle = Convert.ToInt32(txtReader.ReadLine());
+            
 
             //Convert txt file to two dimensional depth map
             for (int x = 0; x < 640; x++)
@@ -276,27 +288,18 @@ namespace WPFKinectTest
             }
 
             //Test the depth map
-
-            //h = height from camera lense to floor
-            double height = 760; //in mm 
-                for (int angle = 50; angle <= 90; angle++)
-                {
-                    double radAngle = Math.PI / 180 * angle;
-                    double calculatedDistance = height / Math.Cos(radAngle);
+                    double radAngle = Math.PI / 180 * testingAngle;
+                    double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
                     if (Math.Abs(depthArray[320, 240] - calculatedDistance) < 50)
                     {
                         Console.WriteLine("\nTesting: Flat");
-                        break;
                     }
-                }
         }
 
 
         private void checkIfFlatFloor(int[] realDepthArray)
         {
-
-            //h = height from camera lense to floor
-            double height = 760; //in mm 
+            //Two dimensional depth array
             int[,] twodDepth = new int[640, 480];
 
             //Place one dimensional depth array into two dimensional depth array
@@ -311,39 +314,41 @@ namespace WPFKinectTest
 
             //Find the best angle that allows us to calculate distance from middle point [320,240]
             //to camera, and then that value be closest to actual value given to us by kinect
+
             if (bestAngle == -361)
             {
                 for (int angle = 50; angle <= 90; angle++)
                 {
+
                     double radAngle = Math.PI / 180 * angle;
-                    double calculatedDistance = height / Math.Cos(radAngle);
+                    double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
                     if (Math.Abs(twodDepth[320, 240] - calculatedDistance) < 50)
                     {
+                        Console.WriteLine(angle + "\nFlat");
                         bestAngle = angle;
-                        Console.WriteLine("\nFlat");
-
                         //saveDepthMapToFile(twodDepth); //Saving depth map for testing purposes
                         break;
                     }
-
+                }
+            }
+            else
+            {
+                //We've already figured out the best angle now we must detect if a non-flat surface
+                //is ahead of us
+                double radAngle = Math.PI / 180 * bestAngle;
+                double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
+                if (Math.Abs(twodDepth[320, 240] - calculatedDistance) < 50)
+                {
+                    
+                }
+                else
+                {
+                    Console.WriteLine(bestAngle + "\n Not Flat!");
                 }
             }
 
 
-                for (int j = 240; j < 480; j++)
-                {
-                    int n = j - 240;
-                    double vertAngle = 72 + (n / 480.0 * (40));
-                    double dStar = height / Math.Cos(vertAngle);
-                    double radiusRobot = 800 / 2;
-                    double horAngle = Math.Atan2(radiusRobot, dStar);
-                    int point = (int) ((horAngle / (55)) * 640);
-
-                    for (int i = point; i < 640 - point; i++)
-                    {
-
-                    }
-                }
+            
 
 
 
