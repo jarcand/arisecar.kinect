@@ -87,7 +87,7 @@ namespace WPFKinectTest
             slider1.Value = kinectSensor.ElevationAngle;
 
             
-            checkIfFlatFloorTest(); //For testing purposes
+            //checkIfFlatFloorTest(); //For testing purposes
         }
  
         /// <summary>
@@ -332,7 +332,7 @@ namespace WPFKinectTest
                     double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
                     if (Math.Abs(twodDepth[320, 240] - calculatedDistance) < 50)
                     {
-                        Console.WriteLine(angle + "\nFlat");
+                        Console.WriteLine("\n"+angle + " Flat");
                         bestAngle = angle;
                         //saveDepthMapToFile(twodDepth); //Saving depth map for testing purposes
                         break;
@@ -347,6 +347,18 @@ namespace WPFKinectTest
                 double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
                 if (Math.Abs(twodDepth[320, 240] - calculatedDistance) < 50)
                 {
+                    int pointsPerAngle = (480 / 43);
+                    int middlePoint = 320;
+                    for (int j = 240; j < 480 - pointsPerAngle;)
+                    {
+                        radAngle -= 1;
+                        calculatedDistance = heightOfCamera / Math.Cos(radAngle);
+                        if (Math.Abs(twodDepth[middlePoint, j += pointsPerAngle] - calculatedDistance) < 50)
+                            Console.WriteLine("Flat" + j);
+                        
+                    }
+
+                    /*
                     for (int j = 240; j < 480; j++)
                     {
                         int n = j - 240;
@@ -358,9 +370,9 @@ namespace WPFKinectTest
 
                         for (int i = point; i < 640 - point; i++)
                         {
-
+                     
                         }
-                    }
+                    }*/
                 }
                 else
                 {
