@@ -339,7 +339,20 @@ namespace WPFKinectTest
                 double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
                 if (Math.Abs(twodDepth[320, 240] - calculatedDistance) < 50)
                 {
-                    
+                    for (int j = 240; j < 480; j++)
+                    {
+                        int n = j - 240;
+                        double vertAngle = 72 + (n / 480.0 * (40));
+                        double dStar = heightOfCamera / Math.Cos(vertAngle);
+                        double radiusRobot = 800 / 2;
+                        double horAngle = Math.Atan2(radiusRobot, dStar);
+                        int point = (int)((horAngle / (55)) * 640);
+
+                        for (int i = point; i < 640 - point; i++)
+                        {
+
+                        }
+                    }
                 }
                 else
                 {
