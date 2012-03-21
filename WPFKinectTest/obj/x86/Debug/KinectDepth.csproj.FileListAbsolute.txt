@@ -38,3 +38,13 @@ C:\Users\Sam\Desktop\Winter Term 11-12\SEG4911\arisecar.kinect\WPFKinectTest\obj
 C:\Users\Sam\Desktop\Winter Term 11-12\SEG4911\arisecar.kinect\WPFKinectTest\obj\x86\Debug\App.g.cs
 C:\Users\Sam\Desktop\Winter Term 11-12\SEG4911\arisecar.kinect\WPFKinectTest\obj\x86\Debug\WPFKinectTest_MarkupCompile.cache
 C:\Users\Sam\Desktop\Winter Term 11-12\SEG4911\arisecar.kinect\WPFKinectTest\obj\x86\Debug\WPFKinectTest.g.resources
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\obj\x86\Debug\WPFKinectTest.exe
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\obj\x86\Debug\WPFKinectTest.pdb
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\bin\Debug\WPFKinectTest.exe
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\bin\Debug\WPFKinectTest.pdb
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\obj\x86\Debug\Window1.baml
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\obj\x86\Debug\Window1.g.cs
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\obj\x86\Debug\App.g.cs
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\obj\x86\Debug\WPFKinectTest_MarkupCompile.cache
+C:\Users\Administrator\Documents\Visual Studio 2010\Projects\arisecar.kinect\WPFKinectTest\obj\x86\Debug\WPFKinectTest.g.resources

@@ -39,7 +39,9 @@ namespace WPFKinectTest
         //Declare some global variables
         private short[] pixelData;
         private byte[] depthFrame32;
-        
+
+        int MaximumError = 100;
+
         //The bitmap that will contain the actual converted depth into an image
         private WriteableBitmap outputBitmap;
         private static readonly int Bgr32BytesPerPixel = (PixelFormats.Bgr32.BitsPerPixel + 7) / 8;
@@ -57,6 +59,9 @@ namespace WPFKinectTest
         //We initialize it to be -361 because we don't know it yet
         int bestAngle = -361;
 
+
+        int[,] providedDepthMap;
+
         //XBox Kinects (default) are limited between 800mm and 4096mm.
         int MinimumDistance = 800;
         int MaximumDistance = 4096;
@@ -64,7 +69,10 @@ namespace WPFKinectTest
         Boolean savedFlag = false;
 
         //height from camera lense to floor
-        double heightOfCamera = 760; //in mm 
+        double heightOfCamera = 660; //in mm 
+
+
+        int[,] marcSimulatedDepthArray = new int[640, 480];
 
         //Declare our Kinect Sensor!
         KinectSensor kinectSensor;
@@ -72,6 +80,7 @@ namespace WPFKinectTest
         public Window1()
         {
             InitializeComponent();
+            
             //Select the first kinect found
             kinectSensor = KinectSensor.KinectSensors[0];
 
@@ -85,9 +94,9 @@ namespace WPFKinectTest
             kinectSensor.DepthFrameReady += new EventHandler<DepthImageFrameReadyEventArgs>(DepthImageReady);
             //Read the elevation value of the Kinect and assign it to the slider so it doesn't look weird when the program starts 
             slider1.Value = kinectSensor.ElevationAngle;
-
             
-            //checkIfFlatFloorTest(); //For testing purposes
+            buildSimulatedDepthMap();
+           // checkIfFlatFloorTest(); //For testing purposes
         }
  
         /// <summary>
@@ -144,6 +153,9 @@ namespace WPFKinectTest
 
 
 
+
+
+
                     //Copy the RGB matrix to the bitmap to make it visible
 					this.outputBitmap.WritePixels(
                         new Int32Rect(0, 0, imageFrame.Width, imageFrame.Height), 
@@ -153,6 +165,8 @@ namespace WPFKinectTest
 
                     //Update the Format
                     this.lastImageFormat = imageFrame.Format;
+
+
                 }
 
                 //Since we are coming from a triggered event, we are not expecting anything here, at least for this short tutorial.
@@ -224,11 +238,57 @@ namespace WPFKinectTest
 
             //Analyze realDepth array:
             //analyzeRealDepthArray(realDepthArray);
-           checkIfFlatFloor(realDepthArray);
+            byte[] ourDepthFrame = checkIfFlatFloor(realDepthArray);
 
+          //  byte[] testingDepthFrame = verifySimulatedDepthMap();
             //Now that we are done painting the pixels, we can return the byte array to be painted
-            return this.depthFrame32;
+            //return this.depthFrame32;
+            //return testingDepthFrame; //for testing/simulation
+            return ourDepthFrame; //for realtime
         }
+
+    
+
+        public byte[] convertDiffToColor(int[,] diffDepthArray)
+        {
+          
+            byte[] colorDepthArray = new byte[4 * 640 * 480];
+
+            for (int x = 0; x < 640; x++)
+            {
+                for (int y = 0; y < 480; y++)
+                {
+                    int diff = diffDepthArray[x, y];
+                    if (marcSimulatedDepthArray[x, y] == -2)
+                    {
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = 0;
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = 255;
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = 0;
+                    }
+                    else if (Math.Abs(diff) < MaximumError)
+                    {
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = 255;
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = 255;
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = 255;
+                    }
+                    else if (diff < -MaximumError)
+                    {
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = 255;
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = 0;
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = 0;
+                    }
+                    else if (diff > MaximumError)
+                    {
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = 0;
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = 0;
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = 255;
+                    }
+                }
+            }
+
+            return colorDepthArray;
+        }
+
 
         //If you move the wheel of your mouse after the slider got the focus, you will move the motor of the kinect.
         //We have to be very careful doing this since the kinect might get unresponsive if we send this command too fast.
@@ -273,53 +333,336 @@ namespace WPFKinectTest
         //Method used for testing simulated depth maps
         private void checkIfFlatFloorTest()
         {
-            //Open the file that contains the depth map of what you want to test
-            TextReader txtReader = new StreamReader("nonFlatFloorHeight760mmElevationminus20.txt");
+
+         //Open the file that contains the depth map of what you want to test
+            TextReader txtReader = new StreamReader("FlatFloorHeight760mmElevationminus20.txt");
             int[,] depthArray = new int[640, 480];
+
 
             //Set the testingAngle or  use a floor loop on a flat surface to find out the best angle
             int testingHeight = Convert.ToInt32(txtReader.ReadLine());
             int testingAngle = Convert.ToInt32(txtReader.ReadLine());
-            
+
+            //Should be 43 but we calculated something around 49...
+            double verticalAngle = 48.5;
+            double horizontalAngle = 57.0;
 
             //Convert txt file to two dimensional depth map
-            for (int x = 0; x < 640; x++)
+       /*     for (int x = 0; x < 640; x++)
             {
                 for (int y = 0; y < 480; y++)
                 {
                     depthArray[x, y] = Convert.ToInt32(txtReader.ReadLine());
                 }
             }
+            */
+           
+
+
+
 
             //Test the depth map
-                    double radAngle = Math.PI / 180 * testingAngle;
-                    double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
-                    if (Math.Abs(depthArray[320, 240] - calculatedDistance) < 50)
+
+            int success = 0;
+            for (double varVert = 0; varVert < 0.01; varVert = varVert + 0.1)
+            {
+                for (double var = -2; var < 2; var = var + 0.1)
+                {
+                    int flatCount = 0;
+                    int minusOneCount = 0;
+                    int notFlatCount = 0;
+                    int dif = 220;
+
+                    for (int i = 320 - dif; i < 320 + dif; i++)
                     {
-                        Console.WriteLine("\nTesting: Flat");
+                        for (int j = 240; j < 480; j++)
+                        {
+                            
+                            double currentAngle = testingAngle + var - ((verticalAngle + varVert) / 2.0) * ((j - 240) / 240.0);
+                            double radAngle = Math.PI / 180 * currentAngle;
+                            double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
+
+                            double currentHorizontalAngle = -(horizontalAngle / 2.0) + horizontalAngle * i / 640.0;
+                            double horRadAngle = Math.PI / 180 * currentHorizontalAngle;
+                            double finalDist = calculatedDistance / Math.Cos(horRadAngle);
+                            double arrayValue = Math.Abs(depthArray[i, j]);
+                            double arrayMiddle = Math.Abs(depthArray[320, j]);
+                            double middleMiddle = Math.Abs(depthArray[320, 240]);
+                            if (arrayValue < 10)
+                            {
+                                minusOneCount++;
+                            }
+                            if (Math.Abs(arrayValue - finalDist) < 200)
+                            {
+                                flatCount++;
+                            }
+                            else
+                            {
+                                notFlatCount++;
+                            }
+                        }
                     }
-                    else
+                    if (flatCount == 240 * dif * 2 ||  true)
                     {
-                        Console.WriteLine("\nTesting: NOT Flat");
+                        success++;
+                        Console.WriteLine("CurrentAngle : " + (testingAngle + var) + "------------------------");
+                        Console.WriteLine("VerticalAngle : " + (verticalAngle + varVert) + "------------------------");
+                        Console.WriteLine("Flat count : " + flatCount);
+                        Console.WriteLine("Not Flat count : " + notFlatCount);
+                        Console.WriteLine("Minus one count : " + minusOneCount);
                     }
+
+               }
+            }
+            Console.WriteLine("Success count : " + success);
+            
+        }
+
+        private void buildSimulatedDepthMap()
+        {
+            int Width = 640;
+            int Height = 480;
+
+            int heightKinect = 660;
+            double angleKinect = 71;
+
+            double verticalWide = 42;
+            double horizontalWide = 57;
+
+            int MaxDistance = 4096;
+            int radius = 400;
+
+            int[,] depthArray = new int[640, 480];
+
+            for (int i = 0; i < Width; i++)
+            {
+                for (int j = 0; j < Height; j++)
+                {
+                    double currentVertAngle = angleKinect - (verticalWide / 2.0) * ((j - 240) / 240.0);
+                    double radVertAngle = currentVertAngle * Math.PI / 180.0;
+                    double calculatedDistance = heightKinect / Math.Cos(radVertAngle);
+
+                    double currentHorAngle = -(horizontalWide / 2.0) + i / 640.0 * horizontalWide;
+                    double radHorAngle = currentHorAngle / 180.0 * Math.PI;
+                    double finalDistance = calculatedDistance / Math.Cos(radHorAngle);
+
+                    depthArray[i, j] = (int)finalDistance;
+                }
+            }
+                for (int x = 0; x < Width; x++)
+                {
+                    for (int j = 240; j < Height; j++)
+                    {
+                        double currentVertAngle = angleKinect - (verticalWide / 2.0) * ((j - 240) / 240.0);
+                        double radVertAngle = currentVertAngle * Math.PI / 180.0;
+                        double calculatedDistance = heightKinect / Math.Cos(radVertAngle);
+
+                        double currentHorAngle = -(horizontalWide / 2.0) + x / 640.0 * horizontalWide;
+                        double radHorAngle = currentHorAngle / 180.0 * Math.PI;
+                        double finalDistance = calculatedDistance / Math.Cos(radHorAngle);
+                        double horDistance = finalDistance * Math.Sin(radHorAngle);
+                        int finalValue = (int)horDistance;
+
+                        if (Math.Abs(Math.Abs(finalValue) - radius) < 3)
+                        {
+                            depthArray[x, j] = -2;
+                        }
+                    }
+                }
+
+            
+            marcSimulatedDepthArray = depthArray;
         }
 
 
-        private void checkIfFlatFloor(int[] realDepthArray)
+        private int[,] provideTestingDepthMapFromFile()
         {
+            //Testing Purposes
+            TextReader txtReader = new StreamReader("FlatFloorCalibrationFile.txt");
+            txtReader.ReadLine();
+            txtReader.ReadLine();
+            int[,] providedDepthMap = new int[640, 480];
+
+            for (int x = 0; x < 640; x++)
+            {
+                for (int y = 0; y < 480; y++)
+                {
+                    providedDepthMap[x, y] = Convert.ToInt32(txtReader.ReadLine());
+                }
+            }
+            savedFlag = true;
+            return providedDepthMap;
+        }
+
+        private byte[] checkIfFlatFloor(int[] realDepthArray)
+        {
+          
+            if(!savedFlag)
+               providedDepthMap = provideTestingDepthMapFromFile();
+          
+                
+
+
+
+
+            //Should be 43 but we calculated something around 49...
+            double verticalAngle = 48.5;
+            double horizontalAngle = 57.0;
+
             //Two dimensional depth array
-            int[,] twodDepth = new int[640, 480];
+            int[,] depthArray = new int[640, 480];
 
             //Place one dimensional depth array into two dimensional depth array
             for (int x = 0; x < 640; x++)
             {
                 for (int y = 0; y < 480; y++)
                 {
-                    twodDepth[x, y] = realDepthArray[x + y * 640];
+                    depthArray[x, y] = realDepthArray[x + y * 640];
                 }
             }
 
 
+            
+            int[,] diffDepthArray = new int[640, 480];
+            for (int x = 0; x < 640; x++)
+            {
+                for (int y = 0; y < 480; y++)
+                {
+                    diffDepthArray[x, y] = depthArray[x, y] - providedDepthMap[x, y];
+                }
+            }
+
+            Boolean goodFlag = true;
+            for (int y = 240; y < 480; y++)
+            {
+                int startDetect = 0;
+                for (int x = 0; x < 640; x++)
+                {
+                    int value = marcSimulatedDepthArray[x, y];
+                    if (value == -2 && startDetect == 0)
+                    {
+                        startDetect = 1;
+                    }
+                    else if (!(value == -2) && startDetect == 1)
+                    {
+                        startDetect = 2;
+                    }
+                    else if (value != -2 && startDetect == 2)
+                    {
+                        if (Math.Abs(diffDepthArray[x, y]) < MaximumError)
+                        {
+
+                        }
+                        else
+                        {
+                            goodFlag = false;
+                        }
+                    }
+                    else if (marcSimulatedDepthArray[x, y] == -2 && startDetect == 2)
+                    {
+                        break;
+                    }
+
+                }
+            }
+
+            if (goodFlag)
+            {
+                //  Console.WriteLine("Flat");
+            }
+            else
+            {
+                Console.WriteLine("Not Flat");
+            }
+          
+
+
+            byte[] colorDepthArray = convertDiffToColor(diffDepthArray);
+
+
+           
+
+
+            return colorDepthArray;
+
+
+            /*
+             //Find the angle
+              for (int angle = 50; angle <= 90; angle++)
+                {
+
+                    double radAngle = Math.PI / 180 * angle;
+                    double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
+                    if (Math.Abs(depthArray[320, 240] - calculatedDistance) < 50)
+                    {
+                        Console.WriteLine("\n"+angle + " Flat");
+                        bestAngle = angle;
+                        //saveDepthMapToFile(twodDepth); //Saving depth map for testing purposes
+                        break;
+                    }
+                }
+
+
+
+            //Test the depth map
+
+            int success = 0;
+            for (double varVert = 0; varVert < 0.01; varVert = varVert + 0.1)
+            {
+                for (double var = -2; var < 2; var = var + 0.1)
+                {
+                    int flatCount = 0;
+                    int minusOneCount = 0;
+                    int notFlatCount = 0;
+                    int dif = 220;
+
+                    for (int i = 320 - dif; i < 320 + dif; i++)
+                    {
+                        for (int j = 240; j < 480; j++)
+                        {
+                            
+                            double currentAngle = bestAngle + var - ((verticalAngle + varVert) / 2.0) * ((j - 240) / 240.0);
+                            double radAngle = Math.PI / 180 * currentAngle;
+                            double calculatedDistance = heightOfCamera / Math.Cos(radAngle);
+
+                            double currentHorizontalAngle = -(horizontalAngle / 2.0) + horizontalAngle * i / 640.0;
+                            double horRadAngle = Math.PI / 180 * currentHorizontalAngle;
+                            double finalDist = calculatedDistance / Math.Cos(horRadAngle);
+                            double arrayValue = Math.Abs(depthArray[i, j]);
+                            double arrayMiddle = Math.Abs(depthArray[320, j]);
+                            double middleMiddle = Math.Abs(depthArray[320, 240]);
+                            if (arrayValue < 10)
+                            {
+                                minusOneCount++;
+                            }
+                            if (Math.Abs(arrayValue - finalDist) < 200)
+                            {
+                                flatCount++;
+                            }
+                            else
+                            {
+                                notFlatCount++;
+                            }
+                        }
+                    }
+                    if (flatCount == 240 * dif * 2 ||  true)
+                    {
+                        success++;
+                        Console.WriteLine("CurrentAngle : " + (bestAngle + var) + "------------------------");
+                        Console.WriteLine("VerticalAngle : " + (verticalAngle + varVert) + "------------------------");
+                        Console.WriteLine("Flat count : " + flatCount);
+                        Console.WriteLine("Not Flat count : " + notFlatCount);
+                        Console.WriteLine("Minus one count : " + minusOneCount);
+                    }
+
+               }
+            }
+            Console.WriteLine("Success count : " + success);
+            */
+        }
+
+
+            /*
             //Find the best angle that allows us to calculate distance from middle point [320,240]
             //to camera, and then that value be closest to actual value given to us by kinect
 
@@ -372,7 +715,7 @@ namespace WPFKinectTest
                         {
                      
                         }
-                    }*/
+                    }
                 }
                 else
                 {
@@ -381,14 +724,6 @@ namespace WPFKinectTest
                       //  saveDepthMapToFile(twodDepth);
                 }
             }
-
-
-            
-
-
-
-            
-          
 
             /*
             if (horizontalPlane == -1)
@@ -429,8 +764,6 @@ namespace WPFKinectTest
                     Console.WriteLine("Flat!");
                 }*/
 
-            }
-
             /*
             for (int i = 639; i > 320; i++)
             {
@@ -443,7 +776,6 @@ namespace WPFKinectTest
                     }
                 }
             }*/
-        
 
 
         
