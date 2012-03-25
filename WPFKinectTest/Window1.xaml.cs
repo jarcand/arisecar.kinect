@@ -19,6 +19,9 @@
 ///this in a simple way.
 ///-----------------------------------------------------------------------------------------------
 using System;
+using System.Threading;
+using System.Net;
+using System.Net.Sockets;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -40,6 +43,16 @@ namespace WPFKinectTest
         private short[] pixelData;
         private byte[] depthFrame32;
 
+        //Server handling client requests asking for flat surface
+        System.Net.Sockets.TcpListener Server;
+
+        //Keep a variable of whether or not the pathway is flat
+        Boolean flatSurface = true;
+
+        //Guard client connected
+        Boolean clientConnected = false;
+
+        //Maximum Error allowed between depth array and calibration image
         int MaximumError = 100;
 
         //The bitmap that will contain the actual converted depth into an image
@@ -59,7 +72,7 @@ namespace WPFKinectTest
         //We initialize it to be -361 because we don't know it yet
         int bestAngle = -361;
 
-
+        //Depth map loaded by test file
         int[,] providedDepthMap;
 
         //XBox Kinects (default) are limited between 800mm and 4096mm.
@@ -71,7 +84,7 @@ namespace WPFKinectTest
         //height from camera lense to floor
         double heightOfCamera = 660; //in mm 
 
-
+        //Marc Andre's static depth map
         int[,] marcSimulatedDepthArray = new int[640, 480];
 
         //Declare our Kinect Sensor!
@@ -95,9 +108,52 @@ namespace WPFKinectTest
             //Read the elevation value of the Kinect and assign it to the slider so it doesn't look weird when the program starts 
             slider1.Value = kinectSensor.ElevationAngle;
             
-            buildSimulatedDepthMap();
+
+            //Build Marc Andre's static depth map
+            buildMarcSimulatedDepthMap();
            // checkIfFlatFloorTest(); //For testing purposes
+
+            //Add key down handler so that user can check when it is flat
+            this.KeyDown += new KeyEventHandler(grid1_KeyDown);
+
+            Thread thread = new Thread(new ThreadStart(AcceptClients));
+            thread.Start();
         }
+
+
+        private void AcceptClients()
+        {
+            Server = new System.Net.Sockets.TcpListener(IPAddress.Any, 1234);
+
+            Server.Start();
+            System.Net.Sockets.TcpClient chatConnection = Server.AcceptTcpClient();
+      //      Thread thread = new Thread(new ThreadStart(communicateWithClient(chatConnection));
+      //      thread.Start();
+            Console.WriteLine("Someone connected!");
+            StreamReader inputStream = new System.IO.StreamReader(chatConnection.GetStream());
+            StreamWriter outputStream = new System.IO.StreamWriter(chatConnection.GetStream());
+            Console.WriteLine("Reader stream");
+            while (true)
+            {
+                String input = inputStream.ReadLine();
+                if (input != null)
+                {
+                    if (input.Contains("a"))
+                    {
+                        Console.WriteLine("Received request");
+                        outputStream.WriteLine(flatSurface);
+                    }
+                }
+
+            }
+
+        }
+
+        private void communicateWithClient(System.Net.Sockets.TcpClient chatConnection)
+        {
+           
+        }
+
  
         /// <summary>
         /// DepthImageReady:
@@ -137,22 +193,9 @@ namespace WPFKinectTest
                     imageFrame.CopyPixelDataTo(this.pixelData);
 
 
-
-
-
-
-
-
-
                     //Convert the pixel data into its RGB Version.
                     //Here is where the magic happens
                     byte[] convertedDepthBits = this.ConvertDepthFrame(this.pixelData, ((KinectSensor)sender).DepthStream);
-					
-
-
-
-
-
 
 
 
@@ -362,7 +405,6 @@ namespace WPFKinectTest
 
 
             //Test the depth map
-
             int success = 0;
             for (double varVert = 0; varVert < 0.01; varVert = varVert + 0.1)
             {
@@ -418,7 +460,8 @@ namespace WPFKinectTest
             
         }
 
-        private void buildSimulatedDepthMap()
+
+        private void buildMarcSimulatedDepthMap()
         {
             int Width = 640;
             int Height = 480;
@@ -478,7 +521,8 @@ namespace WPFKinectTest
         private int[,] provideTestingDepthMapFromFile()
         {
             //Testing Purposes
-            TextReader txtReader = new StreamReader("FlatFloorCalibrationFile.txt");
+            //TextReader txtReader = new StreamReader("FlatFloorCalibrationFile.txt");
+            TextReader txtReader = new StreamReader("TESTINGFILE.txt");
             txtReader.ReadLine();
             txtReader.ReadLine();
             int[,] providedDepthMap = new int[640, 480];
@@ -497,12 +541,9 @@ namespace WPFKinectTest
         private byte[] checkIfFlatFloor(int[] realDepthArray)
         {
           
-            if(!savedFlag)
+            if(!savedFlag)//Get the testing depth map from our file
                providedDepthMap = provideTestingDepthMapFromFile();
           
-                
-
-
 
 
             //Should be 43 but we calculated something around 49...
@@ -513,22 +554,25 @@ namespace WPFKinectTest
             int[,] depthArray = new int[640, 480];
 
             //Place one dimensional depth array into two dimensional depth array
-            for (int x = 0; x < 640; x++)
+  /*          for (int x = 0; x < 640; x++)
             {
                 for (int y = 0; y < 480; y++)
                 {
                     depthArray[x, y] = realDepthArray[x + y * 640];
                 }
-            }
+            }*/
 
-
+            //If we want to calibrate, then we save an image containing a flat surface
+       //     if(!savedFlag)
+       //       saveDepthMapToFile(depthArray);
             
             int[,] diffDepthArray = new int[640, 480];
             for (int x = 0; x < 640; x++)
             {
                 for (int y = 0; y < 480; y++)
                 {
-                    diffDepthArray[x, y] = depthArray[x, y] - providedDepthMap[x, y];
+                    //diffDepthArray[x, y] = depthArray[x, y] - providedDepthMap[x, y];
+                    diffDepthArray[x, y] = realDepthArray[x + y*640] - providedDepthMap[x, y];
                 }
             }
 
@@ -551,7 +595,7 @@ namespace WPFKinectTest
                     {
                         if (Math.Abs(diffDepthArray[x, y]) < MaximumError)
                         {
-
+                            
                         }
                         else
                         {
@@ -562,25 +606,25 @@ namespace WPFKinectTest
                     {
                         break;
                     }
+                    
 
                 }
             }
 
-            if (goodFlag)
+            /*
+            if (flatSurface)
             {
-                //  Console.WriteLine("Flat");
+                Console.WriteLine("Flat");
             }
             else
             {
                 Console.WriteLine("Not Flat");
-            }
-          
+            }*/
 
+
+            flatSurface = goodFlag;
 
             byte[] colorDepthArray = convertDiffToColor(diffDepthArray);
-
-
-           
 
 
             return colorDepthArray;
@@ -866,5 +910,17 @@ namespace WPFKinectTest
                 lastStatus = true;
             }
         }
+
+        private void grid1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.A)
+            {
+                if (flatSurface)
+                    Console.WriteLine("\nFLAT!");
+                else
+                    Console.WriteLine("\nNot flat!");
+            }
+        }
+
    }
 }
