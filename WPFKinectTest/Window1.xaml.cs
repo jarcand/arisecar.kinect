@@ -140,9 +140,14 @@ namespace WPFKinectTest
                 {
                     if (input.Contains("a"))
                     {
-                        Console.WriteLine("Received request");
-                        outputStream.WriteLine(flatSurface);
+                        Console.WriteLine("Received request: " + flatSurface);
+                        outputStream.WriteLine("" + flatSurface);
+                        outputStream.Flush();
                     }
+                }
+                else
+                {
+                    Console.Write(".");
                 }
 
             }
@@ -644,9 +649,9 @@ namespace WPFKinectTest
             if (e.Key == Key.A)
             {
                 if (flatSurface)
-                    Console.WriteLine("\nFLAT!");
+                    Console.Write("FLAT!");
                 else
-                    Console.WriteLine("\nNot flat!");
+                    Console.Write("Not flat!");
             }
             else if (e.Key == Key.C)
             {
