@@ -126,9 +126,18 @@ namespace WPFKinectTest
             Server = new System.Net.Sockets.TcpListener(IPAddress.Any, 1234);
             Console.WriteLine("\nWaiting for Clients");
             Server.Start();
-            System.Net.Sockets.TcpClient chatConnection = Server.AcceptTcpClient();
-      //      Thread thread = new Thread(new ThreadStart(communicateWithClient(chatConnection));
-      //      thread.Start();
+            while (true)
+            {
+                System.Net.Sockets.TcpClient chatConnection = Server.AcceptTcpClient();
+                Thread thread = new Thread(communicateWithClient);
+                thread.Start(chatConnection);
+            }
+
+        }
+
+        private void communicateWithClient(object givenChatConnection)
+        {
+            System.Net.Sockets.TcpClient chatConnection = (System.Net.Sockets.TcpClient) givenChatConnection;
             Console.WriteLine("Someone connected!");
             StreamReader inputStream = new System.IO.StreamReader(chatConnection.GetStream());
             StreamWriter outputStream = new System.IO.StreamWriter(chatConnection.GetStream());
@@ -151,12 +160,6 @@ namespace WPFKinectTest
                 }
 
             }
-
-        }
-
-        private void communicateWithClient(System.Net.Sockets.TcpClient chatConnection)
-        {
-           
         }
 
  
