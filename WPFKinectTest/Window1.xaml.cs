@@ -438,7 +438,7 @@ namespace WPFKinectTest
                 for (int y = 0; y < 480; y++)
                 {
                  //   diffDepthArray[x, y] = depthArray[x, y] - providedDepthMap[x, y];
-                   diffDepthArray[x, y] = realDepthArray[x + y*640] - providedDepthMap[x, y];
+                   diffDepthArray[639 - x, y] = realDepthArray[x + y*640] - providedDepthMap[x, y];
                 }
             }
             
