@@ -135,31 +135,42 @@ namespace WPFKinectTest
 
         }
 
+        int connections = 0;
+
         private void communicateWithClient(object givenChatConnection)
         {
             System.Net.Sockets.TcpClient chatConnection = (System.Net.Sockets.TcpClient) givenChatConnection;
-            Console.WriteLine("Someone connected!");
+            connections++;
+            Console.WriteLine("Someone connected!  Connection count is " + connections);
             StreamReader inputStream = new System.IO.StreamReader(chatConnection.GetStream());
             StreamWriter outputStream = new System.IO.StreamWriter(chatConnection.GetStream());
             Console.WriteLine("Reader stream");
-            while (true)
+            try
             {
-                String input = inputStream.ReadLine();
-                if (input != null)
+                int input = 0;
+                while (input != -1)
                 {
-                    if (input.Contains("a"))
-                    {
-                        Console.WriteLine("Received request: " + flatSurface);
-                        outputStream.WriteLine("" + flatSurface);
-                        outputStream.Flush();
+                    input = inputStream.Read();
+                    switch (input) {
+                        case 'a':
+                            //Console.WriteLine("Received request: " + flatSurface);
+                            outputStream.Write(flatSurface ? '1' : '0');
+                            outputStream.Flush();
+                            break;
+                        case 0:
+                            break;
+                        default:
+                            Console.WriteLine("Junk:" + input);
+                            break;
                     }
                 }
-                else
-                {
-                    Console.Write(".");
-                }
-
             }
+            catch (IOException e)
+            {
+                Console.WriteLine("IOException: " + e);
+            }
+            connections--;
+            Console.WriteLine("Client disconnected.  Connection count is " + connections);
         }
 
  

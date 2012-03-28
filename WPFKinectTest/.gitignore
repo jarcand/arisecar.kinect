@@ -1,0 +1,3 @@
+bin/Debug/*.exe
+bin/Debug/*.pdb
+obj
