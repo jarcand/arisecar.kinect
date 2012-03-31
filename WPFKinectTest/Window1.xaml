@@ -9,7 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     d:DesignHeight="594" 
     d:DesignWidth="1025" 
-    SizeToContent="WidthAndHeight">
+    SizeToContent="WidthAndHeight" Closing="Window_Closing">
     
     <Grid Height="533" Name="grid1" Width="729">
         <Slider Height="478" HorizontalAlignment="Left" Margin="692,26,0,0" Name="slider1" VerticalAlignment="Top" Width="37" Orientation="Vertical" Maximum="26" Minimum="-26" Interval="1" SmallChange="1" TickPlacement="Both" TickFrequency="5" MouseWheel="slider1_MouseWheel" />

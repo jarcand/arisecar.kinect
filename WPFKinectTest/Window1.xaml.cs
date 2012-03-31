@@ -39,6 +39,7 @@ namespace WPFKinectTest
     /// </summary>
     public partial class Window1 : Window
     {
+
         //Declare some global variables
         private short[] pixelData;
         private byte[] depthFrame32;
@@ -94,6 +95,7 @@ namespace WPFKinectTest
         {
             InitializeComponent();
             
+            
             //Select the first kinect found
             kinectSensor = KinectSensor.KinectSensors[0];
 
@@ -115,6 +117,7 @@ namespace WPFKinectTest
 
             //Add key down handler so that user can check when it is flat
             this.KeyDown += new KeyEventHandler(grid1_KeyDown);
+            this.Closing += new System.ComponentModel.CancelEventHandler(Window_Closing);
 
             Thread thread = new Thread(new ThreadStart(AcceptClients));
             thread.Start();
@@ -156,6 +159,9 @@ namespace WPFKinectTest
                             //Console.WriteLine("Received request: " + flatSurface);
                             outputStream.Write(flatSurface ? '1' : '0');
                             outputStream.Flush();
+                            break;
+                        case 'c':
+                            savedFlag = false;
                             break;
                         case 0:
                             break;
@@ -336,7 +342,7 @@ namespace WPFKinectTest
         }
 
 
-             private void buildMarcSimulatedDepthMap()
+        private void buildMarcSimulatedDepthMap()
         {
             int Width = 640;
             int Height = 480;
@@ -599,6 +605,11 @@ namespace WPFKinectTest
                 savedFlag = false;
                 
             } 
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            System.Environment.Exit(1);
         }
 
    }
