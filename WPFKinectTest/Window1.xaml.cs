@@ -50,8 +50,11 @@ namespace WPFKinectTest
         //Keep a variable of whether or not the pathway is flat
         Boolean flatSurface = true;
 
-        //Guard client connected
-        Boolean clientConnected = false;
+        int mid = 360;
+        Boolean flatSurfaceUp = true;
+        Boolean flatSurfaceDown = true;
+        Boolean flatSurfaceLeft = true;
+        Boolean flatSurfaceRight = true;
 
         //Maximum Error allowed between depth array and calibration image
         int MaximumError = 100;
@@ -87,6 +90,7 @@ namespace WPFKinectTest
 
         //Marc Andre's static depth map
         int[,] marcSimulatedDepthArray = new int[640, 480];
+        int[,] zoneArray = new int[4, 240];
 
         //Declare our Kinect Sensor!
         KinectSensor kinectSensor;
@@ -107,13 +111,11 @@ namespace WPFKinectTest
             
             //Subscribe to an event that will be triggered every time a new frame is ready
             kinectSensor.DepthFrameReady += new EventHandler<DepthImageFrameReadyEventArgs>(DepthImageReady);
-            //Read the elevation value of the Kinect and assign it to the slider so it doesn't look weird when the program starts 
-            slider1.Value = kinectSensor.ElevationAngle;
             
 
             //Build Marc Andre's static depth map
             buildMarcSimulatedDepthMap();
-           // checkIfFlatFloorTest(); //For testing purposes
+            createZones();
 
             //Add key down handler so that user can check when it is flat
             this.KeyDown += new KeyEventHandler(grid1_KeyDown);
@@ -157,7 +159,12 @@ namespace WPFKinectTest
                     switch (input) {
                         case 'a':
                             //Console.WriteLine("Received request: " + flatSurface);
-                            outputStream.Write(flatSurface ? '1' : '0');
+                            int resp = (flatSurfaceDown ? 1 : 0) << 0
+                                | (flatSurfaceUp ? 1 : 0) << 1
+                                | (flatSurfaceLeft ? 1 : 0) << 2
+                                | (flatSurfaceRight ? 1 : 0) << 3;
+                            char respB = (char)resp;
+                            outputStream.Write(respB);
                             outputStream.Flush();
                             break;
                         case 'c':
@@ -278,7 +285,16 @@ namespace WPFKinectTest
                 for (int y = 0; y < 480; y++)
                 {
                     int diff = diffDepthArray[x, y];
-                    if (marcSimulatedDepthArray[x, y] == -2)
+                    if ((y == 240 && (zoneArray[0, 240 - 240] <= x && zoneArray[3, 240 - 240] >= x))
+                        || (y == mid && (zoneArray[1, mid - 240] <= x && zoneArray[2, mid - 240] >= x)))
+                    {
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = 0;
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = 255;
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = 0;
+                    }
+                    else if (y >= 240 && 
+                        (zoneArray[0, y - 240] == x || zoneArray[1, y - 240] == x 
+                        || zoneArray[2, y - 240] == x || zoneArray[3, y - 240] == x))
                     {
                         colorDepthArray[4 * (x + y * 640) + RedIndex] = 0;
                         colorDepthArray[4 * (x + y * 640) + GreenIndex] = 255;
@@ -308,17 +324,6 @@ namespace WPFKinectTest
             return colorDepthArray;
         }
 
-
-        //If you move the wheel of your mouse after the slider got the focus, you will move the motor of the kinect.
-        //We have to be very careful doing this since the kinect might get unresponsive if we send this command too fast.
-        private void slider1_MouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            //Calculate the new value based on the wheel movement
-            if (e.Delta > 0) { slider1.Value = slider1.Value + 5; }
-            else { slider1.Value = slider1.Value - 5; }
-            //Send the new elevation value to our Kinect
-            kinectSensor.ElevationAngle = (int)slider1.Value;
-        }
 
         //Here we save an image from the kinect camera so that we may run
         //automated tests later
@@ -353,7 +358,7 @@ namespace WPFKinectTest
             double verticalWide = 42;
             double horizontalWide = 57;
 
-            int MaxDistance = 4096;
+            //int MaxDistance = 4096;
             int radius = 400;
 
             int[,] depthArray = new int[640, 480];
@@ -421,31 +426,17 @@ namespace WPFKinectTest
 
         private byte[] checkIfFlatFloor(int[] realDepthArray)
         {
-            
+
             if (!depthMapLoaded)//Get the testing depth map from our file
-                providedDepthMap = provideTestingDepthMapFromFile();
-          
-
-
-            //Should be 43 but we calculated something around 49...
-            double verticalAngle = 48.5;
-            double horizontalAngle = 57.0;
-
-            //Two dimensional depth array
-            int[,] depthArray = new int[640, 480];
-
-            //Place one dimensional depth array into two dimensional depth array
-      /*      for (int x = 0; x < 640; x++)
             {
-                for (int y = 0; y < 480; y++)
-                {
-                    depthArray[x, y] = realDepthArray[x + y * 640];
-                }
-            }*/
+                providedDepthMap = provideTestingDepthMapFromFile();
+            }
 
             //If we want to calibrate, then we save an image containing a flat surface
             if (!savedFlag)
-                saveDepthMapToFile(realDepthArray); 
+            {
+                saveDepthMapToFile(realDepthArray);
+            }
 
          
             
@@ -454,12 +445,77 @@ namespace WPFKinectTest
             {
                 for (int y = 0; y < 480; y++)
                 {
-                 //   diffDepthArray[x, y] = depthArray[x, y] - providedDepthMap[x, y];
                    diffDepthArray[639 - x, y] = realDepthArray[x + y*640] - providedDepthMap[x, y];
                 }
             }
+
+
+            Boolean goodFlagUp = true;
+            Boolean goodFlagDown = true;
+            Boolean goodFlagLeft = true;
+            Boolean goodFlagRight = true;
+            for (int y = 240; y < 480; y++)
+            {
+                for (int x = 0; x < 640; x++)
+                {
+                    if (x < zoneArray[0, y - 240])
+                    {
+                        //Do nothing we are at the begin
+                    }
+                    else if (x >= zoneArray[0, y - 240] && x <= zoneArray[1, y - 240])
+                    {
+                        if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
+                        {
+                            goodFlagLeft = false;
+                        }
+                    }
+                    else if (x > zoneArray[1, y - 240] && x < zoneArray[2, y - 240])
+                    {
+                        if (y < mid)
+                        {
+                            if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
+                            {
+                                goodFlagUp = false;
+                            }
+                        }
+                        else 
+                        {
+                            if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
+                            {
+                                goodFlagDown = false;
+                            }
+                        }
+                    }
+                    else if (x >= zoneArray[2, y - 240] && x <= zoneArray[3, y - 240])
+                    {
+                        if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
+                        {
+                            goodFlagRight = false;
+                        }
+                    }
+                    else if (x > zoneArray[3, y - 240])
+                    {
+                        //We reach the end of the testing zone.
+                        break;
+                    }
+                }
+            }
+
+
+            flatSurfaceUp = goodFlagUp;
+            flatSurfaceDown = goodFlagDown;
+            flatSurfaceLeft = goodFlagLeft;
+            flatSurfaceRight = goodFlagRight;
+
+            byte[] colorDepthArray = convertDiffToColor(diffDepthArray);
+
+            return colorDepthArray;
+
+        }
+
+        private void createZones()
+        {
             
-            Boolean goodFlag = true;
             for (int y = 240; y < 480; y++)
             {
                 int startDetect = 0;
@@ -473,122 +529,34 @@ namespace WPFKinectTest
                     else if (!(value == -2) && startDetect == 1)
                     {
                         startDetect = 2;
+                        zoneArray[0, y - 240] = x;
+                        zoneArray[1, y - 240] = x + getZoneSize(y);
                     }
                     else if (value != -2 && startDetect == 2)
                     {
-                        if (Math.Abs(diffDepthArray[x, y]) < MaximumError)
-                        {
-                            
-                        }
-                        else
-                        {
-                            goodFlag = false;
-                        }
+                        
                     }
                     else if (marcSimulatedDepthArray[x, y] == -2 && startDetect == 2)
                     {
+                        zoneArray[3, y - 240] = x - 1;
+                        zoneArray[2, y - 240] = x - 1 - getZoneSize(y);
                         break;
                     }
-                    
-
                 }
             }
 
-
-            flatSurface = goodFlag;
-
-            byte[] colorDepthArray = convertDiffToColor(diffDepthArray);
-
-            return colorDepthArray;
-
         }
 
-        Boolean lastStatus = false;
-
-        private void analyzeRealDepthArray(int[] givenRealDepthArray)
+        private int getZoneSize(int y)
         {
-
-            int initialCounter = 5;
-            int counter = initialCounter;
-            int valid = -1;
-            int maxHeight = 30;
-
-            int[ , ] twodDepth = new int[640,480];
-
-
-            for (int x = 0; x < 640; x++)
-            {
-                for (int y = 0; y < 480; y++)
-                {
-                    twodDepth[x, y] = givenRealDepthArray[x + y * 640];
-                }
-            }
-
-            int[,] new2DDepth = new int[640, 480];
-
-            double dAngleX = 58.0 / 640;
-            double dAngleY = 45.0 / 480;
-
-            for (int x = 0; x < 640; x++)
-            {
-                for (int y = 0; y < 480; y++)
-                {
-                    double angleX = 640 * dAngleX - 58 / 2;
-                    double angleY = 480 * dAngleY - 45.0 / 2;
-                    double angleZ = Math.Atan(Math.Sqrt(Math.Tan(angleX) * Math.Tan(angleX) + Math.Tan(angleY) * Math.Tan(angleY)));
-                    int value = (int) (Math.Sin(angleZ) * twodDepth[x, y]);
-                    new2DDepth[x, y] = value;
-                }
-            }
-
-
-            //Let's do every line
-            for (int j = 0; j < 480; j++)
-            {
-                for (int i = 0; i < 640; i++)
-                {
-                    if (new2DDepth[i, j] > 100 && new2DDepth[i, j] < MaximumDistance)
-                    {
-                        if (valid == -1)
-                        {
-                            valid = new2DDepth[i, j];
-                        }
-                        else if (Math.Abs(valid - new2DDepth[i, j]) < maxHeight)
-                        {
-                            valid = new2DDepth[i, j];
-                            counter = initialCounter;
-                        }
-                        else
-                        {
-                            counter--;
-                            if (counter < 1)
-                            {
-                                Console.WriteLine(valid + " : " + new2DDepth[i, j] + " : " + counter);
-                            }
-                            
-                            //We fail. We can't roll on that print an error message.
-                            //Exit
-                            if (lastStatus && counter == 0)
-                            {
-                                Console.WriteLine("FAIL");
-                                lastStatus = false;
-                            }
-                            if (counter == 0)
-                            {
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-
-            //Print success
-            //if (!lastStatus)
-            {
-                Console.WriteLine("SUCCESS");
-                lastStatus = true;
-            }
+            int maxSize = 50;
+            int minSize = 0;
+            int dif = maxSize - minSize;
+            int result = (int) (minSize + dif * (480 - y) / 240.0);
+            return result;
         }
+
+       
 
         private void grid1_KeyDown(object sender, KeyEventArgs e)
         {
