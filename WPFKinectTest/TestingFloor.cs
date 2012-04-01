@@ -5,7 +5,7 @@ using System.Text;
 
 namespace WPFKinectTest
 {
-    class Testing
+    class TestingFloor
     {
         int[] testMap;
         FloorDetection floorDetection = new FloorDetection();
@@ -17,7 +17,7 @@ namespace WPFKinectTest
         int[] allZoneMap; // Map with something in all the zones and all others clear
         int[] clearZoneMap; //Map with nothing in all the zones
 
-        public Testing()
+        public TestingFloor()
         {
             loadTestMaps();
             testing_LeftZone();
@@ -43,49 +43,102 @@ namespace WPFKinectTest
 
         //We want all tests to pass, meaning we want them to all equal true
 
-        private void testing_LeftZone()
+        bool result;
+        public bool testing_LeftZone()
         {
            floorDetection.testing_CheckIfFlatFloor(leftZoneMap);
-           Console.WriteLine(!floorDetection.flatSurfaceLeft); //Print true if something exists in left zone
+           result = !floorDetection.flatSurfaceLeft;
+           Console.WriteLine(result); //Print true if something exists in left zone
+           return result;
         }
 
-        private void testing_RightZone()
+        public bool testing_RightZone()
         {
             floorDetection.testing_CheckIfFlatFloor(rightZoneMap);
-            Console.WriteLine(!floorDetection.flatSurfaceRight); //Print true if something exists in right zone
+            result = !floorDetection.flatSurfaceRight;
+            Console.WriteLine(result); //Print true if something exists in right zone
+            return result;
         }
 
-        private void testing_TopZone()
+        public bool testing_TopZone()
         {
             floorDetection.testing_CheckIfFlatFloor(topZoneMap);
-            Console.WriteLine(!floorDetection.flatSurfaceUp); //Print true if something exists in top zone
+            result = !floorDetection.flatSurfaceUp;
+            Console.WriteLine(result); //Print true if something exists in top zone
+            return result;
         }
 
-        private void testing_BottomZone()
+        public bool testing_BottomZone()
         {
             floorDetection.testing_CheckIfFlatFloor(bottomZoneMap);
-            Console.WriteLine(!floorDetection.flatSurfaceLeft); //Print true if something exists in bottom zone
+            result = !floorDetection.flatSurfaceLeft;
+            Console.WriteLine(result); //Print true if something exists in bottom zone
+            return result;
         }
 
-        private void testing_AllZone()
+        public bool testing_AllZone()
         {
             floorDetection.testing_CheckIfFlatFloor(allZoneMap); //Load map containing all zones being nonflat
             if (floorDetection.flatSurfaceDown || floorDetection.flatSurfaceLeft || floorDetection.flatSurfaceRight || floorDetection.flatSurfaceUp) //If any zones are reporting flat we fail
-                Console.WriteLine(false); 
+            {
+                Console.WriteLine(false);
+                return false;
+            }
             else
-                Console.WriteLine(true); 
+            {
+                Console.WriteLine(true);
+                return true;
+            }
         }
 
-        private void testing_ClearZone()
+        public bool testing_ClearZone()
         {
             floorDetection.testing_CheckIfFlatFloor(clearZoneMap);
             if (floorDetection.flatSurfaceDown && floorDetection.flatSurfaceLeft && floorDetection.flatSurfaceRight && floorDetection.flatSurfaceUp)
+            {
                 Console.WriteLine(true);  //Print true if all zones are clear
+                return true;
+            }
             else
+            {
                 Console.WriteLine(false);
+                return false;
+            }
         }
 
+        public FloorDetection chooseRandomMap()
+        {
+            System.Random random = new System.Random();
+            int[] randomMap;
+            switch (random.Next(6))
+            {
+                case 0:
+                    randomMap = leftZoneMap;
+                    break;
+                case 1:
+                    randomMap = rightZoneMap;
+                    break;
+                case 2:
+                    randomMap = topZoneMap;
+                    break;
+                case 3:
+                    randomMap = bottomZoneMap;
+                    break;
+                case 4:
+                    randomMap = allZoneMap;
+                    break;
+                case 5:
+                    randomMap = clearZoneMap;
+                    break;
+                default:
+                    randomMap = allZoneMap;
+                    break;
+            }
 
+            floorDetection.testing_CheckIfFlatFloor(randomMap);
+            return floorDetection;
+        }
+        
 
 
 
