@@ -81,6 +81,7 @@ namespace WPFKinectTest
             providedDepthMap = provideTestingDepthMapFromFile();
         }
 
+
         private byte[] convertDiffToColor(int[,] diffDepthArray)
         {
 
@@ -317,6 +318,32 @@ namespace WPFKinectTest
             int result = (int)(minSize + dif * (480 - y) / 240.0);
             return result;
         }
+
+
+        public int[] testing_LoadMap(String filename)
+        {
+
+            //Testing Purposes
+            TextReader txtReader = new StreamReader("Testing\\"+filename);
+            int[] providedDepthMap = new int[640*480];
+
+            for (int x = 0; x < 640; x++)
+            {
+                for (int y = 0; y < 480; y++)
+                {
+                    providedDepthMap[x + y*640] = Convert.ToInt32(txtReader.ReadLine());
+                }
+            }
+            return providedDepthMap;
+
+        }
+
+        public void testing_CheckIfFlatFloor(int[] depthArray)
+        {
+            checkIfFlatFloor(depthArray);
+        }
+
+
 
     }
    
