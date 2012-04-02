@@ -17,6 +17,7 @@ namespace WPFKinectTest
 
         //Maximum Error allowed between depth array and calibration image
         int MaximumError = 100;
+        const int MINIMUM_INTERFERANCE = 10;
 
         //Identify each color layer on the R G B
         private const int RedIndex = 2;
@@ -165,10 +166,10 @@ namespace WPFKinectTest
             }
 
 
-            Boolean goodFlagUp = true;
-            Boolean goodFlagDown = true;
-            Boolean goodFlagLeft = true;
-            Boolean goodFlagRight = true;
+            int goodFlagUp = 0;
+            int goodFlagDown = 0;
+            int goodFlagLeft = 0;
+            int goodFlagRight = 0;
             for (int y = 240; y < 480; y++)
             {
                 for (int x = 0; x < 640; x++)
@@ -181,7 +182,7 @@ namespace WPFKinectTest
                     {
                         if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
                         {
-                            goodFlagLeft = false;
+                            goodFlagLeft++;
                         }
                     }
                     else if (x > zoneArray[1, y - 240] && x < zoneArray[2, y - 240])
@@ -190,14 +191,14 @@ namespace WPFKinectTest
                         {
                             if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
                             {
-                                goodFlagUp = false;
+                                goodFlagUp++;
                             }
                         }
                         else
                         {
                             if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
                             {
-                                goodFlagDown = false;
+                                goodFlagDown++;
                             }
                         }
                     }
@@ -205,7 +206,7 @@ namespace WPFKinectTest
                     {
                         if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
                         {
-                            goodFlagRight = false;
+                            goodFlagRight++;
                         }
                     }
                     else if (x > zoneArray[3, y - 240])
@@ -217,10 +218,10 @@ namespace WPFKinectTest
             }
 
 
-            flatSurfaceUp = goodFlagUp;
-            flatSurfaceDown = goodFlagDown;
-            flatSurfaceLeft = goodFlagLeft;
-            flatSurfaceRight = goodFlagRight;
+            flatSurfaceUp = goodFlagUp < MINIMUM_INTERFERANCE;
+            flatSurfaceDown = goodFlagDown < MINIMUM_INTERFERANCE;
+            flatSurfaceLeft = goodFlagLeft < MINIMUM_INTERFERANCE;
+            flatSurfaceRight = goodFlagRight < MINIMUM_INTERFERANCE;
 
             byte[] colorDepthArray = convertDiffToColor(diffDepthArray);
 
