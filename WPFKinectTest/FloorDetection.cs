@@ -125,14 +125,16 @@ namespace WPFKinectTest
                     }
                     else if (diff < -MaximumError)
                     {
+                        byte col = (byte) (200 - Math.Min(-diff, 200));
                         colorDepthArray[4 * (x + y * 640) + RedIndex] = 255;
-                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = 0;
-                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = 0;
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = col;
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = col;
                     }
                     else if (diff > MaximumError)
                     {
-                        colorDepthArray[4 * (x + y * 640) + RedIndex] = 0;
-                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = 0;
+                        byte col = (byte) (200 - Math.Min(diff, 200));
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = col;
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = col;
                         colorDepthArray[4 * (x + y * 640) + BlueIndex] = 255;
                     }
                 }
