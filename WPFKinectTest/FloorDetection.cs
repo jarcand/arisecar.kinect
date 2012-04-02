@@ -18,6 +18,7 @@ namespace WPFKinectTest
         //Maximum Error allowed between depth array and calibration image
         int MaximumError = 100;
         const int MINIMUM_INTERFERANCE = 10;
+        const int TOP = 300;
 
         //Identify each color layer on the R G B
         private const int RedIndex = 2;
@@ -26,7 +27,7 @@ namespace WPFKinectTest
 
         //Marc Andre's static depth map
         int[,] marcSimulatedDepthArray = new int[640, 480];
-        int[,] zoneArray = new int[4, 240];
+        int[,] zoneArray = new int[4, TOP];
 
         public Boolean savedFlag = true;
         Boolean depthMapLoaded = false;
@@ -170,22 +171,22 @@ namespace WPFKinectTest
             int goodFlagDown = 0;
             int goodFlagLeft = 0;
             int goodFlagRight = 0;
-            for (int y = 240; y < 480; y++)
+            for (int y = TOP; y < 480; y++)
             {
                 for (int x = 0; x < 640; x++)
                 {
-                    if (x < zoneArray[0, y - 240])
+                    if (x < zoneArray[0, y - TOP])
                     {
                         //Do nothing we are at the begin
                     }
-                    else if (x >= zoneArray[0, y - 240] && x <= zoneArray[1, y - 240])
+                    else if (x >= zoneArray[0, y - TOP] && x <= zoneArray[1, y - TOP])
                     {
                         if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
                         {
                             goodFlagLeft++;
                         }
                     }
-                    else if (x > zoneArray[1, y - 240] && x < zoneArray[2, y - 240])
+                    else if (x > zoneArray[1, y - TOP] && x < zoneArray[2, y - TOP])
                     {
                         if (y < mid)
                         {
@@ -202,14 +203,14 @@ namespace WPFKinectTest
                             }
                         }
                     }
-                    else if (x >= zoneArray[2, y - 240] && x <= zoneArray[3, y - 240])
+                    else if (x >= zoneArray[2, y - TOP] && x <= zoneArray[3, y - TOP])
                     {
                         if (Math.Abs(diffDepthArray[x, y]) >= MaximumError)
                         {
                             goodFlagRight++;
                         }
                     }
-                    else if (x > zoneArray[3, y - 240])
+                    else if (x > zoneArray[3, y - TOP])
                     {
                         //We reach the end of the testing zone.
                         break;
@@ -249,7 +250,7 @@ namespace WPFKinectTest
             {
                 for (int j = 0; j < Height; j++)
                 {
-                    double currentVertAngle = angleKinect - (verticalWide / 2.0) * ((j - 240) / 240.0);
+                    double currentVertAngle = angleKinect - (verticalWide / 2.0) * ((j - TOP) / (480.0 - TOP));
                     double radVertAngle = currentVertAngle * Math.PI / 180.0;
                     double calculatedDistance = heightKinect / Math.Cos(radVertAngle);
 
@@ -262,9 +263,9 @@ namespace WPFKinectTest
             }
             for (int x = 0; x < Width; x++)
             {
-                for (int j = 240; j < Height; j++)
+                for (int j = TOP; j < Height; j++)
                 {
-                    double currentVertAngle = angleKinect - (verticalWide / 2.0) * ((j - 240) / 240.0);
+                    double currentVertAngle = angleKinect - (verticalWide / 2.0) * ((j - TOP) / (480.0 - TOP));
                     double radVertAngle = currentVertAngle * Math.PI / 180.0;
                     double calculatedDistance = heightKinect / Math.Cos(radVertAngle);
 
@@ -288,7 +289,7 @@ namespace WPFKinectTest
         private void createZones()
         {
 
-            for (int y = 240; y < 480; y++)
+            for (int y = TOP; y < 480; y++)
             {
                 int startDetect = 0;
                 for (int x = 0; x < 640; x++)
@@ -301,8 +302,8 @@ namespace WPFKinectTest
                     else if (!(value == -2) && startDetect == 1)
                     {
                         startDetect = 2;
-                        zoneArray[0, y - 240] = x;
-                        zoneArray[1, y - 240] = x + getZoneSize(y);
+                        zoneArray[0, y - TOP] = x;
+                        zoneArray[1, y - TOP] = x + getZoneSize(y);
                     }
                     else if (value != -2 && startDetect == 2)
                     {
@@ -310,8 +311,8 @@ namespace WPFKinectTest
                     }
                     else if (marcSimulatedDepthArray[x, y] == -2 && startDetect == 2)
                     {
-                        zoneArray[3, y - 240] = x - 1;
-                        zoneArray[2, y - 240] = x - 1 - getZoneSize(y);
+                        zoneArray[3, y - TOP] = x - 1;
+                        zoneArray[2, y - TOP] = x - 1 - getZoneSize(y);
                         break;
                     }
                 }
@@ -324,7 +325,7 @@ namespace WPFKinectTest
             int maxSize = 50;
             int minSize = 0;
             int dif = maxSize - minSize;
-            int result = (int)(minSize + dif * (480 - y) / 240.0);
+            int result = (int)(minSize + dif * (480.0 - y) / TOP);
             return result;
         }
 
