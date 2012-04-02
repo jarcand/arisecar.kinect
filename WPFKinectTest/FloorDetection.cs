@@ -91,20 +91,29 @@ namespace WPFKinectTest
                 for (int y = 0; y < 480; y++)
                 {
                     int diff = diffDepthArray[x, y];
-                    if ((y == 240 && (zoneArray[0, 240 - 240] <= x && zoneArray[3, 240 - 240] >= x))
-                        || (y == mid && (zoneArray[1, mid - 240] <= x && zoneArray[2, mid - 240] >= x)))
+                    if (y == 240 && (zoneArray[0, 0] <= x && zoneArray[3, 0] >= x))
                     {
-                        colorDepthArray[4 * (x + y * 640) + RedIndex] = 0;
-                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = 255;
-                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = 0;
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = (byte)(flatSurfaceUp ? 0 : 255);
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = (byte)(flatSurfaceUp ? 255 : 0);
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = (byte)(flatSurfaceUp ? 0 : 255);
                     }
-                    else if (y >= 240 &&
-                        (zoneArray[0, y - 240] == x || zoneArray[1, y - 240] == x
-                        || zoneArray[2, y - 240] == x || zoneArray[3, y - 240] == x))
+                    else if (y == mid && (zoneArray[1, mid - 240] <= x && zoneArray[2, mid - 240] >= x))
                     {
-                        colorDepthArray[4 * (x + y * 640) + RedIndex] = 0;
-                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = 255;
-                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = 0;
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = (byte)(flatSurfaceDown ? 0 : 255);
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = (byte)(flatSurfaceDown ? 255 : 0);
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = (byte)(flatSurfaceDown ? 0 : 255);
+                    }
+                    else if (y >= 240 && (zoneArray[0, y - 240] == x || zoneArray[1, y - 240] == x))
+                    {
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = (byte)(flatSurfaceLeft ? 0 : 255);
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = (byte)(flatSurfaceLeft ? 255 : 0);
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = (byte)(flatSurfaceLeft ? 0 : 255);
+                    }
+                    else if (y >= 240 && (zoneArray[2, y - 240] == x || zoneArray[3, y - 240] == x))
+                    {
+                        colorDepthArray[4 * (x + y * 640) + RedIndex] = (byte)(flatSurfaceRight ? 0 : 255);
+                        colorDepthArray[4 * (x + y * 640) + GreenIndex] = (byte)(flatSurfaceRight ? 255 : 0);
+                        colorDepthArray[4 * (x + y * 640) + BlueIndex] = (byte)(flatSurfaceRight ? 0 : 255);
                     }
                     else if (Math.Abs(diff) < MaximumError)
                     {
