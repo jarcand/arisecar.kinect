@@ -7,7 +7,6 @@ using System.IO;
 namespace WPFKinectTest {
     class FloorDetection {
 
-        int mid = 360;
         public Boolean flatSurfaceUp = true;
         public Boolean flatSurfaceDown = true;
         public Boolean flatSurfaceLeft = true;
@@ -17,6 +16,7 @@ namespace WPFKinectTest {
         int MaximumError = 100;
         const int MINIMUM_INTERFERANCE = 10;
         const int TOP = 300;
+        int MID = 380;
 
         //Identify each color layer on the R G B
         private const int RedIndex = 2;
@@ -25,7 +25,7 @@ namespace WPFKinectTest {
 
         //Marc Andre's static depth map
         int[,] marcSimulatedDepthArray = new int[640, 480];
-        int[,] zoneArray = new int[4, TOP];
+        int[,] zoneArray = new int[4, 480 - TOP];
 
         public Boolean savedFlag = true;
         Boolean depthMapLoaded = false;
@@ -83,19 +83,19 @@ namespace WPFKinectTest {
                 for (int y = 0; y < 480; y++) {
                     int diff = diffDepthArray[x, y];
                     int r = 0, g = 0, b = 0;
-                    if (y == 240 && (zoneArray[0, 0] <= x && zoneArray[3, 0] >= x)) {
+                    if (y == TOP && (zoneArray[0, 0] <= x && zoneArray[3, 0] >= x)) {
                         r = flatSurfaceUp ? 0 : 255;
                         g = flatSurfaceUp ? 255 : 0;
                         b = flatSurfaceUp ? 0 : 255;
-                    } else if (y == mid && (zoneArray[1, mid - 240] <= x && zoneArray[2, mid - 240] >= x)) {
+                    } else if (y == MID && (zoneArray[1, MID - TOP] <= x && zoneArray[2, MID - TOP] >= x)) {
                         r = flatSurfaceDown ? 0 : 255;
                         g = flatSurfaceDown ? 255 : 0;
                         b = flatSurfaceDown ? 0 : 255;
-                    } else if (y >= 240 && (zoneArray[0, y - 240] == x || zoneArray[1, y - 240] == x)) {
+                    } else if (y >= TOP && (zoneArray[0, y - TOP] == x || zoneArray[1, y - TOP] == x)) {
                         r = flatSurfaceLeft ? 0 : 255;
                         g = flatSurfaceLeft ? 255 : 0;
                         b = flatSurfaceLeft ? 0 : 255;
-                    } else if (y >= 240 && (zoneArray[2, y - 240] == x || zoneArray[3, y - 240] == x)) {
+                    } else if (y >= TOP && (zoneArray[2, y - TOP] == x || zoneArray[3, y - TOP] == x)) {
                         r = flatSurfaceRight ? 0 : 255;
                         g = flatSurfaceRight ? 255 : 0;
                         b = flatSurfaceRight ? 0 : 255;
@@ -158,7 +158,7 @@ namespace WPFKinectTest {
                             goodFlagLeft++;
                         }
                     } else if (x > zoneArray[1, y - TOP] && x < zoneArray[2, y - TOP]) {
-                        if (y < mid) {
+                        if (y < MID) {
                             if (Math.Abs(diffDepthArray[x, y]) >= MaximumError) {
                                 goodFlagUp++;
                             }
