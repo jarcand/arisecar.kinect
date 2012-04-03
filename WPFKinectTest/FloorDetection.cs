@@ -13,8 +13,9 @@ namespace WPFKinectTest {
         public Boolean flatSurfaceRight = true;
 
         //Maximum Error allowed between depth array and calibration image
-        int MaximumError = 100;
-        const int MINIMUM_INTERFERANCE = 10;
+        public int MaximumError = 100;
+        public int MinimumInteferance = 10;
+
         const int TOP = 300;
         int MID = 380;
 
@@ -179,10 +180,10 @@ namespace WPFKinectTest {
             }
 
 
-            flatSurfaceUp = goodFlagUp < MINIMUM_INTERFERANCE;
-            flatSurfaceDown = goodFlagDown < MINIMUM_INTERFERANCE;
-            flatSurfaceLeft = goodFlagLeft < MINIMUM_INTERFERANCE;
-            flatSurfaceRight = goodFlagRight < MINIMUM_INTERFERANCE;
+            flatSurfaceUp = goodFlagUp < MinimumInteferance;
+            flatSurfaceDown = goodFlagDown < MinimumInteferance;
+            flatSurfaceLeft = goodFlagLeft < MinimumInteferance;
+            flatSurfaceRight = goodFlagRight < MinimumInteferance;
 
             byte[] colorDepthArray = convertDiffToColor(diffDepthArray);
 

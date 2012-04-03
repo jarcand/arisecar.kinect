@@ -67,6 +67,18 @@ namespace WPFKinectTest
                         case 'c':
                             floorDetection.savedFlag = false;
                             break;
+                        case 'e':
+                            int newMaxE = inputStream.Read();
+                            if (0 <= newMaxE && newMaxE <= 255) {
+                                floorDetection.MaximumError = newMaxE;
+                            }
+                            break;
+                        case 'i':
+                            int newMinI = inputStream.Read();
+                            if (0 <= newMinI && newMinI <= 255) {
+                                floorDetection.MinimumInteferance = newMinI;
+                            }
+                            break;
                         case 0:
                             break;
                         default:
