@@ -79,6 +79,7 @@ namespace WPFKinectTest
             this.Closing += new System.ComponentModel.CancelEventHandler(Window_Closing);
 
             floorServer = new FloorServer(floorDetection);
+            TestingFloor testing = new TestingFloor();
         }
 
  
