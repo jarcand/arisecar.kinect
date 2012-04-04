@@ -28,6 +28,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Kinect;
 
+
 namespace WPFKinectTest
 {
     /// <summary>
@@ -79,7 +80,7 @@ namespace WPFKinectTest
             this.Closing += new System.ComponentModel.CancelEventHandler(Window_Closing);
 
             floorServer = new FloorServer(floorDetection);
-//            TestingFloor testing = new TestingFloor();
+            TestingFloor testing = new TestingFloor();
         }
 
  
